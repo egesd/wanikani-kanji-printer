@@ -1,0 +1,25 @@
+{
+  "name": "wanikani-kanji-printer",
+  "description": "A simple web app to print WaniKani kanji flashcards.",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "scripts": {
+    "start": "node app.ts",
+    "dev": "nodemon app.ts"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.16",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.17.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
