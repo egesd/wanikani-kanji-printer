@@ -23,6 +23,12 @@ interface KanjiSubject {
     };
 }
 
+interface Assignment {
+    data: {
+        subject_id: number;
+    };
+}
+
 /**
  * Fetches user data from WaniKani API
  * @param apiKey WaniKani API key
@@ -53,23 +59,48 @@ export async function fetchUserData(apiKey: string): Promise<WaniKaniUserRespons
  */
 export async function fetchLearnedKanji(apiKey: string): Promise<string[]> {
     try {
-        // Fetch all guru-or-higher level kanji
-        // Using stages: 5 (Guru I), 6 (Guru II), 7 (Master), 8 (Enlightened), 9 (Burned)
-        const response = await axios.get<WaniKaniResponse<KanjiSubject>>(
+        console.log('Fetching assignments...');
+        const assignmentsResponse = await axios.get<WaniKaniResponse<{ data: { subject_id: number } }>>(
+            `${WANIKANI_API_BASE_URL}/assignments`, {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Wanikani-Revision': '20170710'
+                },
+                params: {
+                    subject_types: 'kanji',
+                    srs_stages: '5,6,7,8,9' // Guru and above
+                }
+            }
+        );
+
+        console.log('Full Assignments Response:', JSON.stringify(assignmentsResponse.data, null, 2));
+
+        const kanjiAssignments = assignmentsResponse.data.data;
+
+        if (kanjiAssignments.length === 0) {
+            console.warn('No kanji found at Guru or higher.');
+            return [];
+        }
+
+        const subjectIds = kanjiAssignments.map(assignment => assignment.data.subject_id);
+        console.log('Subject IDs:', subjectIds);
+
+        const subjectsResponse = await axios.get<WaniKaniResponse<KanjiSubject>>(
             `${WANIKANI_API_BASE_URL}/subjects`, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Wanikani-Revision': '20170710'
                 },
                 params: {
-                    types: 'kanji',
-                    srs_stages: '5,6,7,8,9'
+                    ids: subjectIds.join(',')
                 }
             }
         );
 
-        // Extract just the kanji characters from the response
-        return response.data.data.map(subject => subject.data.characters);
+        const kanjiCharacters = subjectsResponse.data.data.map(subject => subject.data.characters);
+        console.log('Kanji Characters:', kanjiCharacters);
+
+        return kanjiCharacters;
     } catch (error) {
         console.error('Error fetching kanji:', error);
         throw new Error('Failed to fetch kanji from WaniKani API');
